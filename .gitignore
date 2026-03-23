@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env/
+obj/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Temporary / Log files
+*.log
+update_logic.py
+04.py
+data_collection_*.py
+extract.py
+final_pred.py
+prediction_wo_gui.py
+white.jpg

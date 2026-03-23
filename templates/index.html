@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignSense AI - 3-View Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --surface-color: rgba(26, 32, 53, 0.7);
+            --surface-hover: rgba(38, 47, 75, 0.9);
+            --primary: #6366f1;
+            --primary-active: #10b981;
+            --danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.1), transparent 30%);
+            color: var(--text-main);
+            margin: 0; padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .header { text-align: center; margin-bottom: 2rem; }
+        h1 { margin: 0; background: linear-gradient(135deg, #818cf8, #34d399); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .main-layout {
+            display: flex; flex-direction: column; gap: 2rem; max-width: 1400px; margin: 0 auto;
+        }
+
+        .video-wall {
+            width: 100%; border-radius: 24px; overflow: hidden; border: 1px solid var(--border-color);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); background: #000;
+        }
+        .video-wall img { width: 100%; height: auto; display: block; }
+
+        .controls-grid {
+            display: grid; grid-template-columns: 1fr 350px; gap: 2rem;
+        }
+
+        .glass-panel {
+            background: var(--surface-color); backdrop-filter: blur(12px); border: 1px solid var(--border-color);
+            border-radius: 24px; padding: 1.5rem;
+        }
+
+        .output-box {
+            font-size: 2rem; font-weight: 700; background: rgba(0,0,0,0.2);
+            padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border-color);
+            min-height: 4rem; display: flex; align-items: center; color: var(--primary-active);
+        }
+
+        .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 0.75rem; }
+
+        .action-row { display: flex; gap: 1rem; margin-top: 1.5rem; }
+        .btn {
+            flex: 1; padding: 1rem; border-radius: 12px; border: none; cursor: pointer;
+            font-weight: 600; font-size: 1rem; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-start { background: var(--primary); color: white; }
+        .btn-stop { background: var(--danger); color: white; }
+        .btn-secondary { background: var(--surface-hover); color: white; border: 1px solid var(--border-color); }
+        .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        .btn:active { transform: translateY(0); }
+
+        .suggestions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1rem; }
+        .suggestion-btn {
+            padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);
+            border-radius: 10px; color: var(--text-main); cursor: pointer; text-align: center;
+        }
+        .suggestion-btn:hover { background: var(--primary); }
+
+        .training-panel { display: flex; gap: 0.5rem; margin-top: 1.5rem; }
+        input { 
+            flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color);
+            padding: 0.75rem; border-radius: 10px; color: white; outline: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>SignSense Multi-View AI</h1>
+    </div>
+
+    <div class="main-layout">
+        <!-- 3-Panel Video Feed -->
+        <div class="video-wall">
+            <img src="/video_feed" alt="3-Panel Streams">
+        </div>
+
+        <div class="controls-grid">
+            <div class="glass-panel">
+                <div class="label">Sentence Formation (3s Interval)</div>
+                <div class="output-box" id="sentence"> </div>
+                
+                <div style="margin-top: 1rem;">
+                    <div class="label" id="symbolLabel">Current Symbol: -</div>
+                    <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                        <div id="progBar" style="width: 0%; height: 100%; background: var(--primary-active); transition: width 0.1s linear;"></div>
+                    </div>
+                </div>
+
+                <div class="action-row">
+                    <button id="toggleBtn" class="btn btn-start" onclick="toggleActive()">
+                        <span>Start Translation</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="sendAction('space')">Space</button>
+                    <button class="btn btn-secondary" onclick="sendAction('backspace')">Backspace</button>
+                    <button class="btn btn-secondary" onclick="sendAction('clear')">Clear All</button>
+                </div>
+
+                <div class="action-row">
+                    <button class="btn btn-secondary" onclick="sendAction('speak')">Speak Sentence</button>
+                </div>
+            </div>
+
+            <div class="glass-panel">
+                <div class="label">AI Word Suggestions</div>
+                <div class="suggestions">
+                    <button class="suggestion-btn" id="word1" onclick="sendAction('action1')">-</button>
+                    <button class="suggestion-btn" id="word2" onclick="sendAction('action2')">-</button>
+                    <button class="suggestion-btn" id="word3" onclick="sendAction('action3')">-</button>
+                    <button class="suggestion-btn" id="word4" onclick="sendAction('action4')">-</button>
+                </div>
+
+                <div class="label" style="margin-top: 2rem;">Custom Training</div>
+                <div class="training-panel">
+                    <input type="text" id="trainWord" placeholder="Enter word...">
+                    <button class="btn btn-start" style="padding: 0 1rem;" onclick="startTrain()">Train</button>
+                </div>
+                <div id="trainStatus" style="font-size: 0.8rem; margin-top: 0.5rem; color: var(--primary-active); display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isActive = false;
+
+        function updateState() {
+            fetch('/state').then(r => r.json()).then(data => {
+                document.getElementById('sentence').innerText = data.sentence || ' ';
+                document.getElementById('word1').innerText = data.word1?.trim() || '-';
+                document.getElementById('word2').innerText = data.word2?.trim() || '-';
+                document.getElementById('word3').innerText = data.word3?.trim() || '-';
+                document.getElementById('word4').innerText = data.word4?.trim() || '-';
+                
+                // Update Symbol & Progress
+                if(data.current_symbol) {
+                    const match = data.current_symbol.match(/(.*) \((\d+)%\)/);
+                    if(match) {
+                        document.getElementById('symbolLabel').innerText = `Most Sensed Letter: ${match[1].toUpperCase()}`;
+                        document.getElementById('progBar').style.width = match[2] + '%';
+                    } else {
+                        document.getElementById('symbolLabel').innerText = data.current_symbol;
+                        document.getElementById('progBar').style.width = '0%';
+                    }
+                }
+
+                isActive = data.is_active;
+                const btn = document.getElementById('toggleBtn');
+                if(isActive) {
+                    btn.className = "btn btn-stop";
+                    btn.innerText = "Stop Translation";
+                } else {
+                    btn.className = "btn btn-start";
+                    btn.innerText = "Start Translation";
+                }
+
+                if(data.is_capturing) {
+                    document.getElementById('trainStatus').style.display = 'block';
+                    document.getElementById('trainStatus').innerText = `Capturing Samples: ${data.capture_count}/5`;
+                } else {
+                    document.getElementById('trainStatus').style.display = 'none';
+                }
+            });
+        }
+
+        setInterval(updateState, 500);
+
+        function toggleActive() {
+            fetch('/toggle_active', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({active: !isActive})
+            });
+        }
+
+        function sendAction(act) {
+            fetch('/action', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({action: act})
+            });
+        }
+
+        function startTrain() {
+            const w = document.getElementById('trainWord').value;
+            if(!w) return;
+            fetch('/start_capture', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({word: w})
+            });
+        }
+    </script>
+</body>
+</html>
