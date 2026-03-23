@@ -38,8 +38,8 @@ SignSense is a next-generation real-time sign language translation system.
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/Sign-Language-To-Text-and-Speech-Conversion.git
-   cd Sign-Language-To-Text-and-Speech-Conversion
+   git clone https://github.com/purushotham8495/SignSense.git
+   cd SignSense
    ```
 
 2. Install dependencies:
